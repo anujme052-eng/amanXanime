@@ -17,7 +17,7 @@ export async function listVideos(): Promise<VideoRow[]> {
   const { data, error } = await supabase
     .from("videos")
     .select("id, title, description, storage_path, thumbnail_path, duration_seconds, created_at")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as VideoRow[];
 }
@@ -37,6 +37,34 @@ export async function getPlaybackUrl(storagePath: string): Promise<string> {
     .from(BUCKET)
     .createSignedUrl(storagePath, 60 * 60 * 8);
   if (error || !data) throw error ?? new Error("Playback link nahi bana");
+  return data.signedUrl;
+}
+
+/** Original file ka exact size (bytes) — admin ne jitni MB upload ki, wahi. */
+export async function getFileSize(storagePath: string): Promise<number | null> {
+  const idx = storagePath.lastIndexOf("/");
+  const dir = idx > 0 ? storagePath.slice(0, idx) : "";
+  const name = idx > 0 ? storagePath.slice(idx + 1) : storagePath;
+  const { data } = await supabase.storage.from(BUCKET).list(dir, { search: name, limit: 100 });
+  const hit = (data ?? []).find((f) => f.name === name);
+  const size = (hit?.metadata as { size?: number } | null | undefined)?.size;
+  return typeof size === "number" ? size : null;
+}
+
+export function formatSize(bytes: number | null) {
+  if (!bytes) return null;
+  const mb = bytes / (1024 * 1024);
+  return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
+}
+
+/** Full original file download link (attachment) — koi compression nahi. */
+export async function getDownloadUrl(storagePath: string, title: string): Promise<string> {
+  const ext = storagePath.split(".").pop() || "mp4";
+  const safe = title.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "video";
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(storagePath, 60 * 60 * 8, { download: `${safe}.${ext}` });
+  if (error || !data) throw error ?? new Error("Download link nahi bana");
   return data.signedUrl;
 }
 
