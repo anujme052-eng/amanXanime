@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Play, Download, Loader2 } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
 import type { VideoRow } from "@/lib/videos";
+import { readCache, writeCache } from "@/lib/local-cache";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/amanxanime-text-logo.jpg";
 
@@ -37,19 +38,33 @@ function Home() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["videos"],
-    queryFn: listVideos,
+    queryFn: async () => {
+      const rows = await listVideos();
+      writeCache("videos", rows);
+      return rows;
+    },
+    initialData: () => readCache<VideoRow[]>("videos", 24 * 60 * 60 * 1000),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
 
+  const thumbKey = (data ?? []).map((v) => v.thumbnail_path).join(",");
+
   const { data: thumbs } = useQuery({
-    queryKey: ["thumbs", data?.map((v) => v.thumbnail_path).join(",")],
-    queryFn: () =>
-      getThumbnailUrls((data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[]),
+    queryKey: ["thumbs", thumbKey],
+    queryFn: async () => {
+      const map = await getThumbnailUrls(
+        (data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[],
+      );
+      writeCache(`thumbs:${thumbKey}`, map);
+      return map;
+    },
     enabled: !!data,
+    initialData: () => readCache<Record<string, string>>(`thumbs:${thumbKey}`, 6 * 60 * 60 * 1000),
     staleTime: 60 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
   });
+
 
 
   function handleLogoTap() {
@@ -69,8 +84,8 @@ function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-5xl px-3 pb-16 pt-5 sm:px-6">
-      <header className="mb-6 flex items-center gap-3">
+    <main className="mx-auto min-h-screen w-full max-w-5xl px-3 pb-16 pt-4 sm:px-6 sm:pt-5">
+      <header className="mb-5 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:mb-6 sm:gap-3">
         <button
           onClick={handleLogoTap}
           aria-label="amanXanime"
@@ -81,17 +96,21 @@ function Home() {
             alt="amanXanime logo"
             width={64}
             height={64}
-            className="h-16 w-16 select-none"
+            className="h-12 w-12 select-none sm:h-16 sm:w-16"
             draggable={false}
+            fetchPriority="high"
+            decoding="async"
           />
         </button>
         <img
           src={textLogo}
           alt="amanXanime"
-          className="h-10 w-auto object-contain sm:h-12"
+          className="h-8 w-auto min-w-0 max-w-full object-contain object-left sm:h-12"
           draggable={false}
+          fetchPriority="high"
+          decoding="async"
         />
-        {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
+        <span className="text-xs text-muted-foreground">{hint}</span>
       </header>
 
       {isLoading && <p className="text-sm text-muted-foreground">Videos load ho rahi hain…</p>}
@@ -102,7 +121,7 @@ function Home() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
         {data?.map((v, i) => {
           const thumb = v.thumbnail_path ? thumbs?.[v.thumbnail_path] : undefined;
           return (
@@ -116,13 +135,18 @@ function Home() {
                     <img
                       src={thumb}
                       alt={v.title}
-                      loading={i < 4 ? "eager" : "lazy"}
+                      width={640}
+                      height={360}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      loading={i < 2 ? "eager" : "lazy"}
+                      fetchPriority={i < 2 ? "high" : "low"}
                       decoding="async"
                       className="h-full w-full object-cover"
                     />
                   ) : (
                     <Play className="h-9 w-9 text-primary" />
                   )}
+
                   {formatDuration(v.duration_seconds) && (
                     <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
                       {formatDuration(v.duration_seconds)}
@@ -176,9 +200,10 @@ function DownloadButton({ video }: { video: VideoRow }) {
       type="button"
       onClick={handleDownload}
       aria-label={`${video.title} download karein`}
-      className="shrink-0 rounded-lg bg-primary p-2 text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
       disabled={busy}
     >
+
       {busy ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
