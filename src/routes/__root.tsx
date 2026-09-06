@@ -122,7 +122,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.06]"
+        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-60"
         style={{
           backgroundImage: `url(${logo.url})`,
           backgroundSize: "min(70vw, 420px)",
