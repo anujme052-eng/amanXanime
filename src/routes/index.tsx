@@ -4,8 +4,8 @@ import { useRef, useState } from "react";
 import { Play, Download, Loader2 } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
 import type { VideoRow } from "@/lib/videos";
-import logo from "@/assets/logo.png.asset.json";
-import textLogo from "@/assets/amanxanime-text-logo.jpg.asset.json";
+import logo from "@/assets/logo.png";
+import textLogo from "@/assets/amanxanime-text-logo.jpg";
 
 
 export const Route = createFileRoute("/")({
@@ -77,7 +77,7 @@ function Home() {
           className="shrink-0 rounded-full outline-none"
         >
           <img
-            src={logo.url}
+            src={logo}
             alt="amanXanime logo"
             width={64}
             height={64}
@@ -86,7 +86,7 @@ function Home() {
           />
         </button>
         <img
-          src={textLogo.url}
+          src={textLogo}
           alt="amanXanime"
           className="h-10 w-auto object-contain sm:h-12"
           draggable={false}

@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
-import logo from "../assets/logo.png.asset.json";
+import logo from "../assets/logo.png";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -124,7 +124,7 @@ function RootComponent() {
         aria-hidden
         className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-60"
         style={{
-          backgroundImage: `url(${logo.url})`,
+          backgroundImage: `url(${logo})`,
           backgroundSize: "min(70vw, 420px)",
         }}
       />
