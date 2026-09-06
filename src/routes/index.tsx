@@ -200,9 +200,10 @@ function DownloadButton({ video }: { video: VideoRow }) {
       type="button"
       onClick={handleDownload}
       aria-label={`${video.title} download karein`}
-      className="shrink-0 rounded-lg bg-primary p-2 text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
       disabled={busy}
     >
+
       {busy ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
