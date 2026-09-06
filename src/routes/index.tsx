@@ -103,44 +103,51 @@ function Home() {
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5">
-        {data?.map((v) => {
+        {data?.map((v, i) => {
           const thumb = v.thumbnail_path ? thumbs?.[v.thumbnail_path] : undefined;
           return (
-            <Link
+            <div
               key={v.id}
-              to="/watch/$id"
-              params={{ id: v.id }}
               className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary"
             >
-              <div className="relative flex aspect-video items-center justify-center bg-secondary">
-                {thumb ? (
-                  <img
-                    src={thumb}
-                    alt={v.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <Play className="h-9 w-9 text-primary" />
-                )}
-                {formatDuration(v.duration_seconds) && (
-                  <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
-                    {formatDuration(v.duration_seconds)}
-                  </span>
-                )}
-              </div>
+              <Link to="/watch/$id" params={{ id: v.id }} className="block">
+                <div className="relative flex aspect-video items-center justify-center bg-secondary">
+                  {thumb ? (
+                    <img
+                      src={thumb}
+                      alt={v.title}
+                      loading={i < 4 ? "eager" : "lazy"}
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Play className="h-9 w-9 text-primary" />
+                  )}
+                  {formatDuration(v.duration_seconds) && (
+                    <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
+                      {formatDuration(v.duration_seconds)}
+                    </span>
+                  )}
+                </div>
+              </Link>
               <div className="p-2.5 sm:p-3">
-                <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{v.title}</h2>
+                <div className="flex items-start gap-2">
+                  <Link to="/watch/$id" params={{ id: v.id }} className="min-w-0 flex-1">
+                    <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{v.title}</h2>
+                  </Link>
+                  <DownloadButton video={v} />
+                </div>
                 {v.description && (
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
                     {v.description}
                   </p>
                 )}
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
+
     </main>
   );
 }
