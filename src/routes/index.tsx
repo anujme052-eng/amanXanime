@@ -38,6 +38,8 @@ function Home() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["videos"],
     queryFn: listVideos,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const { data: thumbs } = useQuery({
@@ -45,7 +47,10 @@ function Home() {
     queryFn: () =>
       getThumbnailUrls((data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[]),
     enabled: !!data,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
+
 
   function handleLogoTap() {
     taps.current += 1;
