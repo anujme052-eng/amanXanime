@@ -1,7 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft } from "lucide-react";
-import { getVideo, getPlaybackUrl, formatDuration } from "@/lib/videos";
+import { ChevronLeft, Download } from "lucide-react";
+import {
+  getVideo,
+  getPlaybackUrl,
+  getDownloadUrl,
+  getFileSize,
+  formatSize,
+  formatDuration,
+} from "@/lib/videos";
 
 export const Route = createFileRoute("/watch/$id")({
   ssr: false,
@@ -24,8 +31,12 @@ function Watch() {
     queryFn: async () => {
       const video = await getVideo(id);
       if (!video) return null;
-      const url = await getPlaybackUrl(video.storage_path);
-      return { video, url };
+      const [url, downloadUrl, size] = await Promise.all([
+        getPlaybackUrl(video.storage_path),
+        getDownloadUrl(video.storage_path, video.title),
+        getFileSize(video.storage_path),
+      ]);
+      return { video, url, downloadUrl, size };
     },
   });
 
@@ -55,6 +66,19 @@ function Watch() {
               className="aspect-video w-full"
             />
           </div>
+          <a
+            href={data.downloadUrl}
+            download
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <Download className="h-4 w-4" />
+            Download video{formatSize(data.size) ? ` (${formatSize(data.size)})` : ""}
+          </a>
+          <p className="mt-1.5 text-center text-[11px] text-muted-foreground">
+            Poori original quality file phone me save hogi — baad me offline apne video player app me
+            dekh sakte hain.
+          </p>
+
           <h1 className="mt-4 text-xl font-bold sm:text-2xl">{data.video.title}</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             720p tak · {formatDuration(data.video.duration_seconds) ?? "full episode"}
