@@ -37,19 +37,33 @@ function Home() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["videos"],
-    queryFn: listVideos,
+    queryFn: async () => {
+      const rows = await listVideos();
+      writeCache("videos", rows);
+      return rows;
+    },
+    initialData: () => readCache<VideoRow[]>("videos", 24 * 60 * 60 * 1000),
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });
 
+  const thumbKey = (data ?? []).map((v) => v.thumbnail_path).join(",");
+
   const { data: thumbs } = useQuery({
-    queryKey: ["thumbs", data?.map((v) => v.thumbnail_path).join(",")],
-    queryFn: () =>
-      getThumbnailUrls((data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[]),
+    queryKey: ["thumbs", thumbKey],
+    queryFn: async () => {
+      const map = await getThumbnailUrls(
+        (data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[],
+      );
+      writeCache(`thumbs:${thumbKey}`, map);
+      return map;
+    },
     enabled: !!data,
+    initialData: () => readCache<Record<string, string>>(`thumbs:${thumbKey}`, 6 * 60 * 60 * 1000),
     staleTime: 60 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
   });
+
 
 
   function handleLogoTap() {
