@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Play } from "lucide-react";
-import { listVideos, formatDuration, getThumbnailUrls } from "@/lib/videos";
+import { Play, Download, Loader2 } from "lucide-react";
+import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
+import type { VideoRow } from "@/lib/videos";
 import logo from "@/assets/logo.png.asset.json";
 import textLogo from "@/assets/amanxanime-text-logo.jpg.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -36,6 +38,8 @@ function Home() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["videos"],
     queryFn: listVideos,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 
   const { data: thumbs } = useQuery({
@@ -43,7 +47,10 @@ function Home() {
     queryFn: () =>
       getThumbnailUrls((data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[]),
     enabled: !!data,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
+
 
   function handleLogoTap() {
     taps.current += 1;
@@ -96,44 +103,87 @@ function Home() {
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5">
-        {data?.map((v) => {
+        {data?.map((v, i) => {
           const thumb = v.thumbnail_path ? thumbs?.[v.thumbnail_path] : undefined;
           return (
-            <Link
+            <div
               key={v.id}
-              to="/watch/$id"
-              params={{ id: v.id }}
               className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary"
             >
-              <div className="relative flex aspect-video items-center justify-center bg-secondary">
-                {thumb ? (
-                  <img
-                    src={thumb}
-                    alt={v.title}
-                    loading="lazy"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <Play className="h-9 w-9 text-primary" />
-                )}
-                {formatDuration(v.duration_seconds) && (
-                  <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
-                    {formatDuration(v.duration_seconds)}
-                  </span>
-                )}
-              </div>
+              <Link to="/watch/$id" params={{ id: v.id }} className="block">
+                <div className="relative flex aspect-video items-center justify-center bg-secondary">
+                  {thumb ? (
+                    <img
+                      src={thumb}
+                      alt={v.title}
+                      loading={i < 4 ? "eager" : "lazy"}
+                      decoding="async"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Play className="h-9 w-9 text-primary" />
+                  )}
+                  {formatDuration(v.duration_seconds) && (
+                    <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
+                      {formatDuration(v.duration_seconds)}
+                    </span>
+                  )}
+                </div>
+              </Link>
               <div className="p-2.5 sm:p-3">
-                <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{v.title}</h2>
+                <div className="flex items-start gap-2">
+                  <Link to="/watch/$id" params={{ id: v.id }} className="min-w-0 flex-1">
+                    <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{v.title}</h2>
+                  </Link>
+                  <DownloadButton video={v} />
+                </div>
                 {v.description && (
                   <p className="mt-1 line-clamp-2 text-xs text-muted-foreground sm:text-sm">
                     {v.description}
                   </p>
                 )}
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
+
     </main>
+  );
+}
+
+function DownloadButton({ video }: { video: VideoRow }) {
+  const [busy, setBusy] = useState(false);
+
+  async function handleDownload() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const url = await getDownloadUrl(video.storage_path, video.title);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleDownload}
+      aria-label={`${video.title} download karein`}
+      className="shrink-0 rounded-lg bg-primary p-2 text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+      disabled={busy}
+    >
+      {busy ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Download className="h-4 w-4" />
+      )}
+    </button>
   );
 }
