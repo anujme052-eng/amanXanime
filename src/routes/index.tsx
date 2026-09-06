@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Play, Download, Loader2 } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
 import type { VideoRow } from "@/lib/videos";
+import { readCache, writeCache } from "@/lib/local-cache";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/amanxanime-text-logo.jpg";
 
