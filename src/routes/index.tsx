@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Play } from "lucide-react";
-import { listVideos, formatDuration, getThumbnailUrls } from "@/lib/videos";
+import { Play, Download, Loader2 } from "lucide-react";
+import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
+import type { VideoRow } from "@/lib/videos";
 import logo from "@/assets/logo.png.asset.json";
 import textLogo from "@/assets/amanxanime-text-logo.jpg.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
