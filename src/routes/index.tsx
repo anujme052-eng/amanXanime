@@ -84,8 +84,8 @@ function Home() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-5xl px-3 pb-16 pt-5 sm:px-6">
-      <header className="mb-6 flex items-center gap-3">
+    <main className="mx-auto min-h-screen w-full max-w-5xl px-3 pb-16 pt-4 sm:px-6 sm:pt-5">
+      <header className="mb-5 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:mb-6 sm:gap-3">
         <button
           onClick={handleLogoTap}
           aria-label="amanXanime"
@@ -96,17 +96,21 @@ function Home() {
             alt="amanXanime logo"
             width={64}
             height={64}
-            className="h-16 w-16 select-none"
+            className="h-12 w-12 select-none sm:h-16 sm:w-16"
             draggable={false}
+            fetchPriority="high"
+            decoding="async"
           />
         </button>
         <img
           src={textLogo}
           alt="amanXanime"
-          className="h-10 w-auto object-contain sm:h-12"
+          className="h-8 w-auto min-w-0 max-w-full object-contain object-left sm:h-12"
           draggable={false}
+          fetchPriority="high"
+          decoding="async"
         />
-        {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
+        <span className="text-xs text-muted-foreground">{hint}</span>
       </header>
 
       {isLoading && <p className="text-sm text-muted-foreground">Videos load ho rahi hain…</p>}
@@ -117,7 +121,7 @@ function Home() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
         {data?.map((v, i) => {
           const thumb = v.thumbnail_path ? thumbs?.[v.thumbnail_path] : undefined;
           return (
@@ -131,13 +135,18 @@ function Home() {
                     <img
                       src={thumb}
                       alt={v.title}
-                      loading={i < 4 ? "eager" : "lazy"}
+                      width={640}
+                      height={360}
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      loading={i < 2 ? "eager" : "lazy"}
+                      fetchPriority={i < 2 ? "high" : "low"}
                       decoding="async"
                       className="h-full w-full object-cover"
                     />
                   ) : (
                     <Play className="h-9 w-9 text-primary" />
                   )}
+
                   {formatDuration(v.duration_seconds) && (
                     <span className="absolute bottom-1.5 right-1.5 rounded bg-background/80 px-1.5 py-0.5 text-[11px] font-medium">
                       {formatDuration(v.duration_seconds)}
