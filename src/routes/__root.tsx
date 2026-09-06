@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
+import logo from "../assets/logo.png.asset.json";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -119,6 +120,14 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-center bg-no-repeat opacity-[0.06]"
+        style={{
+          backgroundImage: `url(${logo.url})`,
+          backgroundSize: "min(70vw, 420px)",
+        }}
+      />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
