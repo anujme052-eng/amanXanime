@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Play } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls } from "@/lib/videos";
 import logo from "@/assets/logo.png.asset.json";
+import textLogo from "@/assets/amanxanime-text-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
