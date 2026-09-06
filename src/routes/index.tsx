@@ -78,7 +78,12 @@ function Home() {
             draggable={false}
           />
         </button>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">amanXanime</h1>
+        <img
+          src={textLogo.url}
+          alt="amanXanime"
+          className="h-10 w-auto object-contain sm:h-12"
+          draggable={false}
+        />
         {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
       </header>
 
