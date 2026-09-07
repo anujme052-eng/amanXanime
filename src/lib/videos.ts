@@ -234,6 +234,39 @@ export async function saveVideoRecord(input: {
   if (error) throw error;
 }
 
+export type StorageFile = { name: string; size: number | null };
+
+/** Cloud storage me padi hui video files jo abhi database me nahi hain. */
+export async function listUnlinkedStorageFiles(): Promise<StorageFile[]> {
+  const [{ data: files }, rows] = await Promise.all([
+    supabase.storage.from(BUCKET).list("", { limit: 1000, sortBy: { column: "name", order: "asc" } }),
+    listVideos(),
+  ]);
+  const used = new Set(rows.map((r) => r.storage_path));
+  return (files ?? [])
+    .filter((f) => f.id && !used.has(f.name) && /\.(mp4|mkv|webm|mov|m4v|avi)$/i.test(f.name))
+    .map((f) => ({
+      name: f.name,
+      size: (f.metadata as { size?: number } | null | undefined)?.size ?? null,
+    }));
+}
+
+/** Storage me already uploaded file ko database me add karta hai. */
+export async function importStorageFile(input: {
+  storage_path: string;
+  title: string;
+  description: string;
+}) {
+  const { error } = await supabase.from("videos").insert({
+    title: input.title,
+    description: input.description,
+    storage_path: input.storage_path,
+    thumbnail_path: null,
+    duration_seconds: null,
+  });
+  if (error) throw error;
+}
+
 export function formatDuration(seconds: number | null) {
   if (!seconds) return null;
   const h = Math.floor(seconds / 3600);
