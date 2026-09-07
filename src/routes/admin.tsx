@@ -56,8 +56,9 @@ function Admin() {
       const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const stamp = Date.now();
       const path = `${stamp}-${safe}`;
-      const thumbBlob = await captureThumbnail(file);
+      const thumbPromise = captureThumbnail(file);
       await uploadVideoFile(file, path, setProgress);
+      const thumbBlob = await thumbPromise;
       let thumbPath: string | null = null;
       if (thumbBlob) thumbPath = await uploadThumbnail(thumbBlob, `thumbs/${stamp}.jpg`);
       await saveVideoRecord({
