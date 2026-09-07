@@ -156,24 +156,28 @@ export function readDuration(file: File): Promise<number | null> {
 const SUPABASE_URL = import.meta.env["VITE_SUPABASE_URL"] as string;
 const SUPABASE_KEY = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string;
 
-/** Resumable (chunked) upload so 1 hour+ / multi-GB videos upload reliably. */
-export function uploadVideoFile(
+type TusExtras = {
+  parallelUploads?: number;
+  uploadDataDuringCreation?: boolean;
+  chunkSize?: number;
+};
+
+function runTus(
   file: File,
   path: string,
   onProgress: (percent: number) => void,
+  extras: TusExtras,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
       endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
-      retryDelays: [0, 500, 1500, 3000, 5000, 8000],
+      retryDelays: [0, 500, 1500, 3000],
       headers: {
         authorization: `Bearer ${SUPABASE_KEY}`,
         apikey: SUPABASE_KEY,
         "x-upsert": "true",
       },
-      uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
-      chunkSize: 50 * 1024 * 1024,
       metadata: {
         bucketName: BUCKET,
         objectName: path,
@@ -183,12 +187,39 @@ export function uploadVideoFile(
       onError: (err) => reject(err),
       onProgress: (sent, total) => onProgress(Math.round((sent / total) * 100)),
       onSuccess: () => resolve(),
+      ...extras,
     });
 
     upload.findPreviousUploads().then((prev) => {
       if (prev.length > 0 && prev[0]) upload.resumeFromPreviousUpload(prev[0]);
       upload.start();
     });
+  });
+}
+
+/**
+ * Resumable upload. Large files are pushed in several parallel streams so the
+ * full upload bandwidth is used; falls back to a single stream if the storage
+ * server does not support parallel parts.
+ */
+export async function uploadVideoFile(
+  file: File,
+  path: string,
+  onProgress: (percent: number) => void,
+): Promise<void> {
+  const big = file.size > 50 * 1024 * 1024;
+  if (big) {
+    const parts = Math.min(6, Math.max(3, Math.ceil(file.size / (60 * 1024 * 1024))));
+    try {
+      await runTus(file, path, onProgress, { parallelUploads: parts });
+      return;
+    } catch {
+      onProgress(0);
+    }
+  }
+  await runTus(file, path, onProgress, {
+    uploadDataDuringCreation: true,
+    chunkSize: 50 * 1024 * 1024,
   });
 }
 
