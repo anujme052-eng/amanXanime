@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiPublicLiteRouteImport } from './routes/api/public/lite'
+import { Route as ApiPublicLiteWatchRouteImport } from './routes/api/public/lite/watch'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,39 +35,63 @@ const ApiPublicLiteRoute = ApiPublicLiteRouteImport.update({
   path: '/api/public/lite',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLiteWatchRoute = ApiPublicLiteWatchRouteImport.update({
+  id: '/watch',
+  path: '/watch',
+  getParentRoute: () => ApiPublicLiteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
-  '/api/public/lite': typeof ApiPublicLiteRoute
+  '/api/public/lite': typeof ApiPublicLiteRouteWithChildren
+  '/api/public/lite/watch': typeof ApiPublicLiteWatchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
-  '/api/public/lite': typeof ApiPublicLiteRoute
+  '/api/public/lite': typeof ApiPublicLiteRouteWithChildren
+  '/api/public/lite/watch': typeof ApiPublicLiteWatchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
-  '/api/public/lite': typeof ApiPublicLiteRoute
+  '/api/public/lite': typeof ApiPublicLiteRouteWithChildren
+  '/api/public/lite/watch': typeof ApiPublicLiteWatchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/watch/$id' | '/api/public/lite'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/watch/$id'
+    | '/api/public/lite'
+    | '/api/public/lite/watch'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/watch/$id' | '/api/public/lite'
-  id: '__root__' | '/' | '/admin' | '/watch/$id' | '/api/public/lite'
+  to:
+    | '/'
+    | '/admin'
+    | '/watch/$id'
+    | '/api/public/lite'
+    | '/api/public/lite/watch'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/watch/$id'
+    | '/api/public/lite'
+    | '/api/public/lite/watch'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   WatchIdRoute: typeof WatchIdRoute
-  ApiPublicLiteRoute: typeof ApiPublicLiteRoute
+  ApiPublicLiteRoute: typeof ApiPublicLiteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -99,14 +124,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicLiteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lite/watch': {
+      id: '/api/public/lite/watch'
+      path: '/watch'
+      fullPath: '/api/public/lite/watch'
+      preLoaderRoute: typeof ApiPublicLiteWatchRouteImport
+      parentRoute: typeof ApiPublicLiteRoute
+    }
   }
 }
+
+interface ApiPublicLiteRouteChildren {
+  ApiPublicLiteWatchRoute: typeof ApiPublicLiteWatchRoute
+}
+
+const ApiPublicLiteRouteChildren: ApiPublicLiteRouteChildren = {
+  ApiPublicLiteWatchRoute: ApiPublicLiteWatchRoute,
+}
+
+const ApiPublicLiteRouteWithChildren = ApiPublicLiteRoute._addFileChildren(
+  ApiPublicLiteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   WatchIdRoute: WatchIdRoute,
-  ApiPublicLiteRoute: ApiPublicLiteRoute,
+  ApiPublicLiteRoute: ApiPublicLiteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
