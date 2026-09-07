@@ -165,7 +165,7 @@ export function uploadVideoFile(
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
       endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
-      retryDelays: [0, 1000, 3000, 5000, 10000, 20000],
+      retryDelays: [0, 500, 1500, 3000, 5000, 8000],
       headers: {
         authorization: `Bearer ${SUPABASE_KEY}`,
         apikey: SUPABASE_KEY,
@@ -173,7 +173,7 @@ export function uploadVideoFile(
       },
       uploadDataDuringCreation: true,
       removeFingerprintOnSuccess: true,
-      chunkSize: 24 * 1024 * 1024,
+      chunkSize: 50 * 1024 * 1024,
       metadata: {
         bucketName: BUCKET,
         objectName: path,
