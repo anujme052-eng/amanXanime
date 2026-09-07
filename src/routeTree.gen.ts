@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
+import { Route as ApiPublicLiteRouteImport } from './routes/api/public/lite'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +29,44 @@ const WatchIdRoute = WatchIdRouteImport.update({
   path: '/watch/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicLiteRoute = ApiPublicLiteRouteImport.update({
+  id: '/api/public/lite',
+  path: '/api/public/lite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
+  '/api/public/lite': typeof ApiPublicLiteRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
+  '/api/public/lite': typeof ApiPublicLiteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/watch/$id': typeof WatchIdRoute
+  '/api/public/lite': typeof ApiPublicLiteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/watch/$id'
+  fullPaths: '/' | '/admin' | '/watch/$id' | '/api/public/lite'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/watch/$id'
-  id: '__root__' | '/' | '/admin' | '/watch/$id'
+  to: '/' | '/admin' | '/watch/$id' | '/api/public/lite'
+  id: '__root__' | '/' | '/admin' | '/watch/$id' | '/api/public/lite'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   WatchIdRoute: typeof WatchIdRoute
+  ApiPublicLiteRoute: typeof ApiPublicLiteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/lite': {
+      id: '/api/public/lite'
+      path: '/api/public/lite'
+      fullPath: '/api/public/lite'
+      preLoaderRoute: typeof ApiPublicLiteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   WatchIdRoute: WatchIdRoute,
+  ApiPublicLiteRoute: ApiPublicLiteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
