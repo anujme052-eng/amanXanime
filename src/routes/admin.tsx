@@ -2,16 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ChevronLeft, Trash2 } from "lucide-react";
+import { listVideos, deleteVideo, formatDuration } from "@/lib/videos";
 import {
-  listVideos,
-  uploadVideoFile,
-  saveVideoRecord,
-  deleteVideo,
-  readDuration,
-  formatDuration,
-  captureThumbnail,
-  uploadThumbnail,
-} from "@/lib/videos";
+  getUploadState,
+  startBackgroundUpload,
+  subscribeUploads,
+} from "@/lib/upload-manager";
+import { useSyncExternalStore } from "react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
