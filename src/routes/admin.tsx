@@ -2,13 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ChevronLeft, Trash2 } from "lucide-react";
-import { listVideos, deleteVideo, formatDuration } from "@/lib/videos";
 import {
-  getUploadState,
-  startBackgroundUpload,
-  subscribeUploads,
-} from "@/lib/upload-manager";
-import { useSyncExternalStore } from "react";
+  listVideos,
+  uploadVideoFile,
+  saveVideoRecord,
+  deleteVideo,
+  readDuration,
+  formatDuration,
+  captureThumbnail,
+  uploadThumbnail,
+} from "@/lib/videos";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -40,22 +43,48 @@ function Admin() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("Ep.1");
   const [file, setFile] = useState<File | null>(null);
-  const upload = useSyncExternalStore(subscribeUploads, getUploadState);
-  const progress = upload.active ? upload.progress : null;
-  const message = upload.message;
+  const [progress, setProgress] = useState<number | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  // Background upload poora hote hi list refresh
-  useEffect(() => {
-    if (upload.completedCount > 0) qc.invalidateQueries({ queryKey: ["videos"] });
-  }, [upload.completedCount, qc]);
-
-  function handleUpload(e: React.FormEvent) {
+  async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
-    const started = startBackgroundUpload({ file, title, description });
-    if (started) {
+    setMessage(null);
+    setProgress(0);
+    try {
+      const duration = await readDuration(file);
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const stamp = Date.now();
+      const path = `${stamp}-${safe}`;
+      const thumbPromise = captureThumbnail(file);
+      await uploadVideoFile(file, path, setProgress);
+      const thumbBlob = await thumbPromise;
+      let thumbPath: string | null = null;
+      if (thumbBlob) thumbPath = await uploadThumbnail(thumbBlob, `thumbs/${stamp}.jpg`);
+      await saveVideoRecord({
+        title: title.trim() || file.name,
+        description: description.trim(),
+        storage_path: path,
+        thumbnail_path: thumbPath,
+        duration_seconds: duration,
+      });
+      setMessage("Video upload ho gayi!");
       setTitle("");
       setFile(null);
+      setProgress(null);
+      qc.invalidateQueries({ queryKey: ["videos"] });
+    } catch (err) {
+      setProgress(null);
+      const detail = err instanceof Error ? err.message : String(err);
+      const connectionFailed =
+        detail.includes("ProgressEvent") ||
+        detail.includes("response code: n/a") ||
+        detail.includes("Failed to fetch");
+      setMessage(
+        connectionFailed
+          ? "Upload ke dauran internet connection toot gaya. Wahi file dobara chun kar Upload karein—upload resume ho jayega."
+          : `Upload fail hua: ${detail}`,
+      );
     }
   }
 
