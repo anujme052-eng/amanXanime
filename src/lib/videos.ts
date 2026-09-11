@@ -198,30 +198,20 @@ function runTus(
 }
 
 /**
- * Resumable upload. Large files are pushed in several parallel streams so the
- * full upload bandwidth is used; falls back to a single stream if the storage
- * server does not support parallel parts.
+ * Resumable upload. Storage server sirf 6 MB ke chunks accept karta hai,
+ * isliye single stream + 6 MB chunk size use hota hai (resume support ke saath).
  */
 export async function uploadVideoFile(
   file: File,
   path: string,
   onProgress: (percent: number) => void,
 ): Promise<void> {
-  const big = file.size > 50 * 1024 * 1024;
-  if (big) {
-    const parts = Math.min(6, Math.max(3, Math.ceil(file.size / (60 * 1024 * 1024))));
-    try {
-      await runTus(file, path, onProgress, { parallelUploads: parts });
-      return;
-    } catch {
-      onProgress(0);
-    }
-  }
   await runTus(file, path, onProgress, {
     uploadDataDuringCreation: true,
-    chunkSize: 50 * 1024 * 1024,
+    chunkSize: 6 * 1024 * 1024,
   });
 }
+
 
 export async function saveVideoRecord(input: {
   title: string;
