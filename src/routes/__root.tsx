@@ -7,11 +7,52 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 
 import logo from "../assets/logo.png";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import {
+  clearUploadMessage,
+  getUploadState,
+  subscribeUploads,
+} from "../lib/upload-manager";
+
+function UploadIndicator() {
+  const upload = useSyncExternalStore(subscribeUploads, getUploadState);
+  if (!upload.active && !upload.message) return null;
+
+  return (
+    <div className="fixed bottom-3 left-3 right-3 z-50 mx-auto max-w-sm rounded-xl border border-border bg-card p-3 shadow-lg sm:left-auto sm:right-4">
+      <div className="flex items-center justify-between gap-2">
+        <p className="truncate text-sm font-medium">
+          {upload.active ? `Uploading: ${upload.label}` : upload.message}
+        </p>
+        {!upload.active && (
+          <button
+            onClick={clearUploadMessage}
+            className="shrink-0 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-secondary"
+          >
+            Band karein
+          </button>
+        )}
+      </div>
+      {upload.active && (
+        <>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${upload.progress}%` }}
+            />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {upload.progress}% — page badal sakte hain, upload chalta rahega
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
