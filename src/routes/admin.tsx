@@ -75,7 +75,16 @@ function Admin() {
       qc.invalidateQueries({ queryKey: ["videos"] });
     } catch (err) {
       setProgress(null);
-      setMessage(`Upload fail hua: ${(err as Error).message}`);
+      const detail = err instanceof Error ? err.message : String(err);
+      const connectionFailed =
+        detail.includes("ProgressEvent") ||
+        detail.includes("response code: n/a") ||
+        detail.includes("Failed to fetch");
+      setMessage(
+        connectionFailed
+          ? "Upload ke dauran internet connection toot gaya. Wahi file dobara chun kar Upload karein—upload resume ho jayega."
+          : `Upload fail hua: ${detail}`,
+      );
     }
   }
 
