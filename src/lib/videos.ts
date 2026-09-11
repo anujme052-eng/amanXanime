@@ -156,24 +156,36 @@ export function readDuration(file: File): Promise<number | null> {
 const SUPABASE_URL = import.meta.env["VITE_SUPABASE_URL"] as string;
 const SUPABASE_KEY = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string;
 
+function getResumableUploadEndpoint() {
+  const baseUrl = SUPABASE_URL.replace(/\/$/, "");
+  const directStorageUrl = baseUrl.replace(
+    /^(https:\/\/[^./]+)\.supabase\.co$/,
+    "$1.storage.supabase.co",
+  );
+  return `${directStorageUrl}/storage/v1/upload/resumable`;
+}
+
 type TusExtras = {
   parallelUploads?: number;
   uploadDataDuringCreation?: boolean;
   chunkSize?: number;
 };
 
-function runTus(
+async function runTus(
   file: File,
   path: string,
   onProgress: (percent: number) => void,
   extras: TusExtras,
 ): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token ?? SUPABASE_KEY;
+
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
-      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
-      retryDelays: [0, 500, 1500, 3000],
+      endpoint: getResumableUploadEndpoint(),
+      retryDelays: [0, 1_000, 3_000, 5_000, 10_000, 20_000],
       headers: {
-        authorization: `Bearer ${SUPABASE_KEY}`,
+        authorization: `Bearer ${accessToken}`,
         apikey: SUPABASE_KEY,
         "x-upsert": "true",
       },
