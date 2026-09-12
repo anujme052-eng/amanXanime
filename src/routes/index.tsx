@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Play, Download, Loader2 } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
@@ -24,6 +23,16 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: async () => {
+    try {
+      const videos = await listVideos();
+      const paths = videos.map((v) => v.thumbnail_path).filter(Boolean) as string[];
+      const thumbs = await getThumbnailUrls(paths);
+      return { videos, thumbs, failed: false };
+    } catch {
+      return { videos: [] as VideoRow[], thumbs: {} as Record<string, string>, failed: true };
+    }
+  },
   component: Home,
 });
 
@@ -35,21 +44,8 @@ function Home() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hint, setHint] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["videos"],
-    queryFn: listVideos,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-  });
+  const { videos: data, thumbs, failed } = Route.useLoaderData();
 
-  const { data: thumbs } = useQuery({
-    queryKey: ["thumbs", data?.map((v) => v.thumbnail_path).join(",")],
-    queryFn: () =>
-      getThumbnailUrls((data ?? []).map((v) => v.thumbnail_path).filter(Boolean) as string[]),
-    enabled: !!data,
-    staleTime: 60 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-  });
 
 
   function handleLogoTap() {
