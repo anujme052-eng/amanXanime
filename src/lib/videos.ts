@@ -1,5 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
-import * as tus from "tus-js-client";
+// NOTE: tus-js-client ko yahan static import mat karo — iske andar Node-only
+// modules hain jo server (published site) par crash karte hain. Isliye ise
+// runTus ke andar dynamically import kiya jata hai (sirf browser me chalta hai).
 
 export const BUCKET = "videos";
 
@@ -179,6 +181,7 @@ async function runTus(
 ): Promise<void> {
   const { data } = await supabase.auth.getSession();
   const accessToken = data.session?.access_token ?? SUPABASE_KEY;
+  const tus = await import("tus-js-client");
 
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
