@@ -12,4 +12,14 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Older phone browsers (JioPhone/KaiOS, old Android) can't parse modern syntax,
+    // so the browser bundle is compiled down. The server bundle keeps its own target.
+    environments: {
+      client: {
+        build: { target: ["es2017", "safari11"] },
+      },
+    },
+  },
 });
+
