@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Download } from "lucide-react";
 import {
   getVideo,
@@ -11,7 +10,6 @@ import {
 } from "@/lib/videos";
 
 export const Route = createFileRoute("/watch/$id")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Video chalayein — amanXanime" },
@@ -20,25 +18,25 @@ export const Route = createFileRoute("/watch/$id")({
       { property: "og:description", content: "Episode ko seedha browser me chalayein." },
     ],
   }),
-  component: Watch,
-});
-
-function Watch() {
-  const { id } = Route.useParams();
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["video", id],
-    queryFn: async () => {
-      const video = await getVideo(id);
-      if (!video) return null;
+  loader: async ({ params }) => {
+    try {
+      const video = await getVideo(params.id);
+      if (!video) return { data: null, failed: false };
       const [url, downloadUrl, size] = await Promise.all([
         getPlaybackUrl(video.storage_path),
         getDownloadUrl(video.storage_path, video.title),
         getFileSize(video.storage_path),
       ]);
-      return { video, url, downloadUrl, size };
-    },
-  });
+      return { data: { video, url, downloadUrl, size }, failed: false };
+    } catch {
+      return { data: null, failed: true };
+    }
+  },
+  component: Watch,
+});
+
+function Watch() {
+  const { data, failed } = Route.useLoaderData();
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-4xl px-3 pb-16 pt-4 sm:px-6">
@@ -49,10 +47,10 @@ function Watch() {
         <ChevronLeft className="h-4 w-4" /> Sabhi videos
       </Link>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Video khul rahi hai…</p>}
-      {(error || data === null) && !isLoading && (
+      {(failed || data === null) && (
         <p className="text-sm text-destructive">Ye video nahi mili.</p>
       )}
+
 
       {data && (
         <>
