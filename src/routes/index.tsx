@@ -90,13 +90,13 @@ function Home() {
         {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
       </header>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Videos load ho rahi hain…</p>}
-      {error && <p className="text-sm text-destructive">Videos load nahi ho payi.</p>}
-      {!isLoading && data?.length === 0 && (
+      {failed && <p className="text-sm text-destructive">Videos load nahi ho payi.</p>}
+      {!failed && data.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
           <p className="text-sm text-muted-foreground">Abhi koi video nahi hai.</p>
         </div>
       )}
+
 
       <div className="grid grid-cols-2 gap-3 sm:gap-5">
         {data?.map((v, i) => {
