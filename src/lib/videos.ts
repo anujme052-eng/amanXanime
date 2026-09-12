@@ -181,6 +181,7 @@ async function runTus(
 ): Promise<void> {
   const { data } = await supabase.auth.getSession();
   const accessToken = data.session?.access_token ?? SUPABASE_KEY;
+  const tus = await import("tus-js-client");
 
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
