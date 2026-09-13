@@ -59,7 +59,6 @@ function Home() {
     if (taps.current >= 10) {
       taps.current = 0;
       setHint(null);
-      localStorage.setItem(ADMIN_KEY, "1");
       navigate({ to: "/admin" });
     }
   }
