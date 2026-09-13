@@ -36,7 +36,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const ADMIN_KEY = "amanx_admin_unlocked";
 
 function Home() {
   const navigate = useNavigate();
