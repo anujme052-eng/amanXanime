@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ChevronLeft, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listVideos,
   uploadVideoFile,
@@ -12,6 +13,7 @@ import {
   captureThumbnail,
   uploadThumbnail,
 } from "@/lib/videos";
+import { convertToMp4, isMp4, toMp4Name } from "@/lib/convert";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -33,48 +35,95 @@ const ADMIN_KEY = "amanx_admin_unlocked";
 
 function Admin() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [secret, setSecret] = useState("");
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
   useEffect(() => {
-    setAllowed(localStorage.getItem(ADMIN_KEY) === "1");
+    setAllowed(sessionStorage.getItem(ADMIN_KEY) === "1");
   }, []);
 
+  async function handleUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    setKeyError(null);
+    setChecking(true);
+    try {
+      const { data, error } = await supabase.rpc("verify_admin_secret", {
+        _secret: secret.trim(),
+      });
+      if (error) throw error;
+      if (data === true) {
+        sessionStorage.setItem(ADMIN_KEY, "1");
+        setAllowed(true);
+      } else {
+        setKeyError("Secret key galat hai.");
+      }
+    } catch {
+      setKeyError("Key check nahi ho payi. Internet check karein.");
+    } finally {
+      setChecking(false);
+    }
+  }
+
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["videos"], queryFn: listVideos });
+  const { data } = useQuery({ queryKey: ["videos"], queryFn: listVideos, enabled: allowed === true });
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("Ep.1");
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  const [converting, setConverting] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
     setMessage(null);
-    setProgress(0);
     try {
-      const duration = await readDuration(file);
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      let uploadFile = file;
+      if (!isMp4(file)) {
+        setConverting(0);
+        setMessage("Video MP4 me badli ja rahi hai… ye thoda samay le sakta hai.");
+        try {
+          uploadFile = await convertToMp4(file, setConverting);
+          setMessage("MP4 ban gayi, ab upload ho rahi hai…");
+        } catch (convErr) {
+          setConverting(null);
+          setMessage(
+            `Ye video MP4 me convert nahi ho payi: ${
+              convErr instanceof Error ? convErr.message : String(convErr)
+            }`,
+          );
+          return;
+        }
+        setConverting(null);
+      }
+
+      setProgress(0);
+      const duration = await readDuration(uploadFile);
+      const safe = toMp4Name(uploadFile.name).replace(/[^a-zA-Z0-9._-]/g, "_");
       const stamp = Date.now();
       const path = `${stamp}-${safe}`;
-      const thumbPromise = captureThumbnail(file);
-      await uploadVideoFile(file, path, setProgress);
+      const thumbPromise = captureThumbnail(uploadFile);
+      await uploadVideoFile(uploadFile, path, setProgress);
       const thumbBlob = await thumbPromise;
       let thumbPath: string | null = null;
       if (thumbBlob) thumbPath = await uploadThumbnail(thumbBlob, `thumbs/${stamp}.jpg`);
       await saveVideoRecord({
-        title: title.trim() || file.name,
+        title: title.trim() || file.name.replace(/\.[^.]+$/, ""),
         description: description.trim(),
         storage_path: path,
         thumbnail_path: thumbPath,
         duration_seconds: duration,
       });
-      setMessage("Video upload ho gayi!");
+      setMessage("Video upload ho gayi (MP4 me)!");
       setTitle("");
       setFile(null);
       setProgress(null);
       qc.invalidateQueries({ queryKey: ["videos"] });
     } catch (err) {
       setProgress(null);
+      setConverting(null);
       const detail = err instanceof Error ? err.message : String(err);
       const connectionFailed =
         detail.includes("ProgressEvent") ||
@@ -89,15 +138,35 @@ function Admin() {
   }
 
   if (allowed === null) return null;
+
   if (!allowed) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6 text-center">
-        <div>
-          <p className="text-sm text-muted-foreground">Ye page sirf admin ke liye hai.</p>
-          <Link to="/" className="mt-3 inline-block text-sm font-semibold text-primary">
+      <main className="flex min-h-screen items-center justify-center px-6">
+        <form onSubmit={handleUnlock} className="w-full max-w-sm rounded-xl border border-border bg-card p-5">
+          <h1 className="text-lg font-semibold">Admin secret key</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Admin panel kholne ke liye secret key daalein.
+          </p>
+          <input
+            type="password"
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder="Secret key"
+            autoComplete="off"
+            className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          {keyError && <p className="mt-2 text-sm text-destructive">{keyError}</p>}
+          <button
+            type="submit"
+            disabled={!secret.trim() || checking}
+            className="mt-4 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {checking ? "Check ho raha hai…" : "Unlock karein"}
+          </button>
+          <Link to="/" className="mt-3 block text-center text-sm text-muted-foreground">
             Home par jayein
           </Link>
-        </div>
+        </form>
       </main>
     );
   }
@@ -112,8 +181,8 @@ function Admin() {
       </Link>
       <h1 className="text-2xl font-bold">Admin — Video Upload</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Kitni bhi videos daaliye. 1 ghante se lambi video bhi chalegi (5 GB tak, upload beech me ruk
-        jaye to dobara wahi file chunne par resume ho jata hai).
+        Kisi bhi format ki video chunein (MKV, AVI, MOV…) — upload se pehle wo apne aap MP4 me badal
+        di jayegi, aur download bhi MP4 me hi hoga.
       </p>
 
       <form
@@ -148,6 +217,15 @@ function Admin() {
           />
         </div>
 
+        {converting !== null && (
+          <div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+              <div className="h-full bg-primary transition-all" style={{ width: `${converting}%` }} />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{converting}% MP4 me badla</p>
+          </div>
+        )}
+
         {progress !== null && (
           <div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
@@ -160,10 +238,14 @@ function Admin() {
 
         <button
           type="submit"
-          disabled={!file || progress !== null}
+          disabled={!file || progress !== null || converting !== null}
           className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
         >
-          {progress !== null ? "Upload ho raha hai…" : "Upload karein"}
+          {converting !== null
+            ? "MP4 ban rahi hai…"
+            : progress !== null
+              ? "Upload ho raha hai…"
+              : "Upload karein"}
         </button>
       </form>
 
