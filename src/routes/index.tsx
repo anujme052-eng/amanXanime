@@ -36,7 +36,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const ADMIN_KEY = "amanx_admin_unlocked";
 
 function Home() {
   const navigate = useNavigate();
@@ -59,7 +58,6 @@ function Home() {
     if (taps.current >= 10) {
       taps.current = 0;
       setHint(null);
-      localStorage.setItem(ADMIN_KEY, "1");
       navigate({ to: "/admin" });
     }
   }
