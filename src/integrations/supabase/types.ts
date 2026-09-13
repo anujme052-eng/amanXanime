@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string
+          id: string
+          secret: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          secret: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          secret?: string
+        }
+        Relationships: []
+      }
       videos: {
         Row: {
           created_at: string
@@ -49,7 +67,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      verify_admin_secret: { Args: { _secret: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
