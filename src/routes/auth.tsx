@@ -14,20 +14,11 @@ export const Route = createFileRoute("/auth")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect:
-      typeof search.redirect === "string" &&
-      search.redirect.startsWith("/") &&
-      !search.redirect.startsWith("//")
-        ? search.redirect
-        : undefined,
-  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
-  const redirectTo = Route.useSearch({ select: (s) => s.redirect });
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,7 +35,7 @@ function AuthPage() {
       setBusy(false);
       return;
     }
-    navigate({ to: redirectTo ?? "/", replace: true });
+    navigate({ to: "/", replace: true });
   }
 
   return (
