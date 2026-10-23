@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -30,6 +30,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+
+      - name: Prepare Capacitor assets
+        run: |
+          mkdir -p dist android/app/src/main/assets
+          echo '<!doctype html><html><body>Opening app...</body></html>' > dist/index.html
 
       - name: Build Android APK
         run: |
