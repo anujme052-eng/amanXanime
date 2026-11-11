@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Jio VidStream Hub',
   webDir: 'dist',
   server: {
-    url: 'https://jio-vidstream-hub.pages.dev/',
+    url: 'https://amanxanime.lovable.app/',
     cleartext: false,
   },
 };

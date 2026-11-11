@@ -26,6 +26,8 @@ export const Route = createFileRoute("/admin")({
       },
       { property: "og:title", content: "Admin — Video Upload" },
       { property: "og:description", content: "Unlimited videos upload karein, 1 ghante se lambi bhi." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Admin,
