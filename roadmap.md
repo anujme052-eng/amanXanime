@@ -1,7 +1,5 @@
-# Current fixes
+# Current work
 
-- [x] Point the Android app to the published amanXanime site.
-- [x] Repair Android APK version numbering in the build workflow.
-- [x] Remove duplicate public home/watch routes so the login-protected pages own those URLs.
-- [x] Refresh route state when sign-in or sign-out changes.
-- [ ] Run type checks, verify routes and APK workflow edits, and apply the required package security update.
+- [ ] Show sequential episode numbers instead of video titles in the viewer-facing list and playback page.
+- [ ] Make the upload page available without sign-in or a secret key while removing public edit/delete access.
+- [ ] Add a clear upload link for signed-out visitors and verify the upload page and access policies.
