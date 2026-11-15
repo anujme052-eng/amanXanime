@@ -4,6 +4,7 @@ import { Play, Download, Loader2, Compass, LogOut } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
 import type { VideoRow } from "@/lib/videos";
 import { getCurrentUsername, signOutWithCleanup } from "@/lib/auth";
+import { episodeLabel } from "@/lib/episodes";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/amanxanime-text-logo.jpg";
 
@@ -162,7 +163,7 @@ function Home() {
               <div className="p-2.5 sm:p-3">
                 <div className="flex items-start gap-2">
                   <Link to="/watch/$id" params={{ id: v.id }} className="min-w-0 flex-1">
-                    <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{v.title}</h2>
+                    <h2 className="line-clamp-2 text-sm font-semibold sm:text-base">{episodeLabel(i)}</h2>
                   </Link>
                   <DownloadButton video={v} />
                 </div>

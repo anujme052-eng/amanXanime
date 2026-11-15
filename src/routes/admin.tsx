@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   listVideos,
   uploadVideoFile,
@@ -33,42 +32,9 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-const ADMIN_KEY = "amanx_admin_unlocked";
-
 function Admin() {
-  const [allowed, setAllowed] = useState<boolean | null>(null);
-  const [secret, setSecret] = useState("");
-  const [keyError, setKeyError] = useState<string | null>(null);
-  const [checking, setChecking] = useState(false);
-
-  useEffect(() => {
-    setAllowed(sessionStorage.getItem(ADMIN_KEY) === "1");
-  }, []);
-
-  async function handleUnlock(e: React.FormEvent) {
-    e.preventDefault();
-    setKeyError(null);
-    setChecking(true);
-    try {
-      const { data, error } = await supabase.rpc("verify_admin_secret", {
-        _secret: secret.trim(),
-      });
-      if (error) throw error;
-      if (data === true) {
-        sessionStorage.setItem(ADMIN_KEY, "1");
-        setAllowed(true);
-      } else {
-        setKeyError("Secret key galat hai.");
-      }
-    } catch {
-      setKeyError("Key check nahi ho payi. Internet check karein.");
-    } finally {
-      setChecking(false);
-    }
-  }
-
   const qc = useQueryClient();
-  const { data } = useQuery({ queryKey: ["videos"], queryFn: listVideos, enabled: allowed === true });
+  const { data } = useQuery({ queryKey: ["videos"], queryFn: listVideos });
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("Ep.1");
@@ -137,40 +103,6 @@ function Admin() {
           : `Upload fail hua: ${detail}`,
       );
     }
-  }
-
-  if (allowed === null) return null;
-
-  if (!allowed) {
-    return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <form onSubmit={handleUnlock} className="w-full max-w-sm rounded-xl border border-border bg-card p-5">
-          <h1 className="text-lg font-semibold">Admin secret key</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Admin panel kholne ke liye secret key daalein.
-          </p>
-          <input
-            type="password"
-            value={secret}
-            onChange={(e) => setSecret(e.target.value)}
-            placeholder="Secret key"
-            autoComplete="off"
-            className="mt-4 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-          />
-          {keyError && <p className="mt-2 text-sm text-destructive">{keyError}</p>}
-          <button
-            type="submit"
-            disabled={!secret.trim() || checking}
-            className="mt-4 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-          >
-            {checking ? "Check ho raha hai…" : "Unlock karein"}
-          </button>
-          <Link to="/" className="mt-3 block text-center text-sm text-muted-foreground">
-            Home par jayein
-          </Link>
-        </form>
-      </main>
-    );
   }
 
   return (

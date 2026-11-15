@@ -7,7 +7,9 @@ import {
   getFileSize,
   formatSize,
   formatDuration,
+  listVideos,
 } from "@/lib/videos";
+import { episodeLabel } from "@/lib/episodes";
 
 export const Route = createFileRoute("/_authenticated/watch/$id")({
   ssr: false,
@@ -21,14 +23,18 @@ export const Route = createFileRoute("/_authenticated/watch/$id")({
   }),
   loader: async ({ params }) => {
     try {
-      const video = await getVideo(params.id);
+      const [video, videos] = await Promise.all([getVideo(params.id), listVideos()]);
       if (!video) return { data: null, failed: false };
+      const position = videos.findIndex((item) => item.id === video.id);
       const [url, downloadUrl, size] = await Promise.all([
         getPlaybackUrl(video.storage_path),
         getDownloadUrl(video.storage_path, video.title),
         getFileSize(video.storage_path),
       ]);
-      return { data: { video, url, downloadUrl, size }, failed: false };
+      return {
+        data: { video, url, downloadUrl, size, episode: episodeLabel(Math.max(position, 0)) },
+        failed: false,
+      };
     } catch {
       return { data: null, failed: true };
     }
@@ -77,7 +83,7 @@ function Watch() {
             dekh sakte hain.
           </p>
 
-          <h1 className="mt-4 text-xl font-bold sm:text-2xl">{data.video.title}</h1>
+          <h1 className="mt-4 text-xl font-bold sm:text-2xl">{data.episode}</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             720p tak · {formatDuration(data.video.duration_seconds) ?? "full episode"}
           </p>

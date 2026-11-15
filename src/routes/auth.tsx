@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Upload } from "lucide-react";
 import { signInWithUsername } from "@/lib/auth";
 
 export const Route = createFileRoute("/auth")({
@@ -84,6 +84,12 @@ function AuthPage() {
             Sign in
           </button>
         </form>
+        <Link
+          to="/admin"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-input px-4 py-2.5 text-sm font-medium transition-colors hover:bg-accent"
+        >
+          <Upload className="h-4 w-4" /> Bina account video upload karein
+        </Link>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Account nahi hai?{" "}
           <Link to="/signup" className="font-medium text-primary hover:underline">
