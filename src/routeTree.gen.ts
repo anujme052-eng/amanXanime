@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCompassRouteImport } from './routes/_authenticated/compass'
@@ -24,11 +23,6 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -55,14 +49,12 @@ const AuthenticatedWatchIdRoute = AuthenticatedWatchIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
   '/signup': typeof SignupRoute
   '/compass': typeof AuthenticatedCompassRoute
   '/watch/$id': typeof AuthenticatedWatchIdRoute
 }
 export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
   '/signup': typeof SignupRoute
   '/compass': typeof AuthenticatedCompassRoute
   '/': typeof AuthenticatedIndexRoute
@@ -72,7 +64,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/admin': typeof AdminRoute
-  '/auth': typeof AuthRoute
   '/signup': typeof SignupRoute
   '/_authenticated/compass': typeof AuthenticatedCompassRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -80,14 +71,13 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/auth' | '/signup' | '/compass' | '/watch/$id'
+  fullPaths: '/' | '/admin' | '/signup' | '/compass' | '/watch/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/admin' | '/auth' | '/signup' | '/compass' | '/' | '/watch/$id'
+  to: '/admin' | '/signup' | '/compass' | '/' | '/watch/$id'
   id:
     | '__root__'
     | '/_authenticated'
     | '/admin'
-    | '/auth'
     | '/signup'
     | '/_authenticated/compass'
     | '/_authenticated/'
@@ -97,7 +87,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AdminRoute: typeof AdminRoute
-  AuthRoute: typeof AuthRoute
   SignupRoute: typeof SignupRoute
 }
 
@@ -115,13 +104,6 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -173,7 +155,6 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AdminRoute: AdminRoute,
-  AuthRoute: AuthRoute,
   SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport

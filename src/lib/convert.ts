@@ -1,21 +1,28 @@
-// Browser me hi video ko MP4 container me badalta hai (ffmpeg WebAssembly).
-// Sirf container change hota hai (stream copy), isliye quality waisi hi rehti hai
-// aur ye re-encode se bahut tez hota hai.
-
+// Re-encode videos in the browser as broadly playable 360p MP4 (H.264 + AAC).
 const CORE_BASE = "https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd";
-
-export function isMp4(file: File) {
-  return /\.mp4$/i.test(file.name) || file.type === "video/mp4";
-}
+const FFmpegClass = "libx264";
+const outputSizeFilter = "scale=-2:360:flags=fast_bilinear";
 
 export function toMp4Name(name: string) {
   return name.replace(/\.[^.]+$/, "") + ".mp4";
 }
 
-/**
- * Non-MP4 file ko MP4 me badal kar naya File deta hai.
- * Agar convert na ho paye to error throw karta hai.
- */
+export function getMp4ConversionArgs(inputName: string, outputName: string) {
+  return [
+    "-i", inputName,
+    "-vf", outputSizeFilter,
+    "-c:v", FFmpegClass,
+    "-preset", "ultrafast",
+    "-crf", "28",
+    "-c:a", "aac",
+    "-b:a", "96k",
+    "-movflags", "+faststart",
+    "-f", "mp4",
+    outputName,
+  ];
+}
+
+/** Convert any browser-selected video into a 360p H.264/AAC MP4 file. */
 export async function convertToMp4(
   file: File,
   onProgress: (percent: number) => void,
@@ -27,47 +34,29 @@ export async function convertToMp4(
 
   const ffmpeg = new FFmpeg();
   ffmpeg.on("progress", ({ progress }) => {
-    const pct = Math.round((progress || 0) * 100);
-    onProgress(Math.min(99, Math.max(0, pct)));
+    onProgress(Math.min(99, Math.max(0, Math.round((progress || 0) * 100))));
   });
 
-  await ffmpeg.load({
-    coreURL: await toBlobURL(`${CORE_BASE}/ffmpeg-core.js`, "text/javascript"),
-    wasmURL: await toBlobURL(`${CORE_BASE}/ffmpeg-core.wasm`, "application/wasm"),
-  });
+  try {
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${CORE_BASE}/ffmpeg-core.js`, "text/javascript"),
+      wasmURL: await toBlobURL(`${CORE_BASE}/ffmpeg-core.wasm`, "application/wasm"),
+    });
 
-  const inputName = "input" + (file.name.match(/\.[^.]+$/)?.[0] ?? ".bin");
-  const outputName = "output.mp4";
-  await ffmpeg.writeFile(inputName, await fetchFile(file));
+    const inputName = `input${file.name.match(/\.[^.]+$/)?.[0] ?? ".bin"}`;
+    const outputName = "output.mp4";
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
 
-  const attempts: string[][] = [
-    ["-i", inputName, "-c", "copy", "-movflags", "+faststart", outputName],
-    ["-i", inputName, "-c:v", "copy", "-c:a", "aac", "-movflags", "+faststart", outputName],
-  ];
+    const code = await ffmpeg.exec(getMp4ConversionArgs(inputName, outputName));
+    if (code !== 0) throw new Error("Is video format ko 360p MP4 me convert nahi kiya ja saka.");
 
-  let ok = false;
-  for (const args of attempts) {
-    try {
-      const code = await ffmpeg.exec(args);
-      if (code === 0) {
-        ok = true;
-        break;
-      }
-    } catch {
-      // agla tarika try karein
-    }
-  }
-
-  if (!ok) {
+    const output = await ffmpeg.readFile(outputName);
+    const bytes = output as Uint8Array;
+    const buffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(buffer).set(bytes);
+    onProgress(100);
+    return new File([buffer], toMp4Name(file.name), { type: "video/mp4" });
+  } finally {
     ffmpeg.terminate();
-    throw new Error("Ye video MP4 me convert nahi ho payi.");
   }
-
-  const out = await ffmpeg.readFile(outputName);
-  ffmpeg.terminate();
-
-  const bytes = out as Uint8Array;
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  return new File([buffer], toMp4Name(file.name), { type: "video/mp4" });
 }

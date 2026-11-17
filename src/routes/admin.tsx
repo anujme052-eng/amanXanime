@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import {
   listVideos,
   uploadVideoFile,
@@ -12,19 +12,19 @@ import {
   captureThumbnail,
   uploadThumbnail,
 } from "@/lib/videos";
-import { convertToMp4, isMp4, toMp4Name } from "@/lib/convert";
+import { convertToMp4, toMp4Name } from "@/lib/convert";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Admin — Video Upload | amanXanime" },
+      { title: "Video upload — amanXanime" },
       {
         name: "description",
-        content: "Admin panel: unlimited videos upload karein, episode description ke saath.",
+        content: "360p MP4 video upload karein aur episodes dekhein.",
       },
-      { property: "og:title", content: "Admin — Video Upload" },
-      { property: "og:description", content: "Unlimited videos upload karein, 1 ghante se lambi bhi." },
+      { property: "og:title", content: "Video upload — amanXanime" },
+      { property: "og:description", content: "360p MP4 video upload karein." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -48,24 +48,22 @@ function Admin() {
     if (!file) return;
     setMessage(null);
     try {
-      let uploadFile = file;
-      if (!isMp4(file)) {
-        setConverting(0);
-        setMessage("Video MP4 me badli ja rahi hai… ye thoda samay le sakta hai.");
-        try {
-          uploadFile = await convertToMp4(file, setConverting);
-          setMessage("MP4 ban gayi, ab upload ho rahi hai…");
-        } catch (convErr) {
-          setConverting(null);
-          setMessage(
-            `Ye video MP4 me convert nahi ho payi: ${
-              convErr instanceof Error ? convErr.message : String(convErr)
-            }`,
-          );
-          return;
-        }
+      setConverting(0);
+      setMessage("Video 360p MP4 me badli ja rahi hai… isme thoda samay lag sakta hai.");
+      let uploadFile: File;
+      try {
+        uploadFile = await convertToMp4(file, setConverting);
+        setMessage("360p MP4 taiyar hai, ab upload ho rahi hai…");
+      } catch (convErr) {
         setConverting(null);
+        setMessage(
+          `Video convert nahi ho payi: ${
+            convErr instanceof Error ? convErr.message : String(convErr)
+          }`,
+        );
+        return;
       }
+      setConverting(null);
 
       setProgress(0);
       const duration = await readDuration(uploadFile);
@@ -84,7 +82,7 @@ function Admin() {
         thumbnail_path: thumbPath,
         duration_seconds: duration,
       });
-      setMessage("Video upload ho gayi (MP4 me)!");
+      setMessage("Video 360p MP4 me upload ho gayi!");
       setTitle("");
       setFile(null);
       setProgress(null);
@@ -113,10 +111,10 @@ function Admin() {
       >
         <ChevronLeft className="h-4 w-4" /> Site par wapas
       </Link>
-      <h1 className="text-2xl font-bold">Admin — Video Upload</h1>
+      <h1 className="text-2xl font-bold">Video upload</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Kisi bhi format ki video chunein (MKV, AVI, MOV…) — upload se pehle wo apne aap MP4 me badal
-        di jayegi, aur download bhi MP4 me hi hoga.
+        Video upload se pehle 360p MP4 me badal di jayegi. Badi files ko badalne me waqt lag sakta
+        hai—browser khula rakhein.
       </p>
 
       <form
@@ -145,7 +143,6 @@ function Admin() {
           <label className="mb-1 block text-sm font-medium">Video file</label>
           <input
             type="file"
-            accept="video/*"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:text-secondary-foreground"
           />
@@ -196,16 +193,6 @@ function Admin() {
                 {v.description} {formatDuration(v.duration_seconds) ? `· ${formatDuration(v.duration_seconds)}` : ""}
               </p>
             </div>
-            <button
-              onClick={async () => {
-                await deleteVideo(v);
-                qc.invalidateQueries({ queryKey: ["videos"] });
-              }}
-              className="shrink-0 rounded-md p-2 text-destructive hover:bg-secondary"
-              aria-label="Delete video"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
           </li>
         ))}
       </ul>

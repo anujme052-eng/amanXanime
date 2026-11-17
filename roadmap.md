@@ -1,5 +1,4 @@
 # Current work
 
-- [ ] Show sequential episode numbers instead of video titles in the viewer-facing list and playback page.
-- [ ] Make the upload page available without sign-in or a secret key while removing public edit/delete access.
-- [ ] Add a clear upload link for signed-out visitors and verify the upload page and access policies.
+- [ ] Convert every upload to a 360p MP4, expose upload without login or a secret key, and remove sign-in screens.
+- [ ] Keep editing and deleting unavailable to public visitors; verify the public upload flow and downloads.

@@ -85,7 +85,7 @@ function Watch() {
 
           <h1 className="mt-4 text-xl font-bold sm:text-2xl">{data.episode}</h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            720p tak · {formatDuration(data.video.duration_seconds) ?? "full episode"}
+            360p MP4 · {formatDuration(data.video.duration_seconds) ?? "full episode"}
           </p>
           {data.video.description && (
             <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground">

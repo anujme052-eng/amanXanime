@@ -59,13 +59,12 @@ export function formatSize(bytes: number | null) {
   return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
 }
 
-/** Full original file download link (attachment) — koi compression nahi. */
+/** Converted MP4 download link (attachment). */
 export async function getDownloadUrl(storagePath: string, title: string): Promise<string> {
-  const ext = storagePath.split(".").pop() || "mp4";
   const safe = title.replace(/[^a-zA-Z0-9 _-]/g, "").trim() || "video";
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(storagePath, 60 * 60 * 8, { download: `${safe}.${ext}` });
+    .createSignedUrl(storagePath, 60 * 60 * 8, { download: `${safe}.mp4` });
   if (error || !data) throw error ?? new Error("Download link nahi bana");
   return data.signedUrl;
 }

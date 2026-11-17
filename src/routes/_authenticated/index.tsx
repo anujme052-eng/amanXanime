@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Play, Download, Loader2, Compass, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Play, Download, Loader2, Compass, Upload } from "lucide-react";
 import { listVideos, formatDuration, getThumbnailUrls, getDownloadUrl } from "@/lib/videos";
 import type { VideoRow } from "@/lib/videos";
-import { getCurrentUsername, signOutWithCleanup } from "@/lib/auth";
 import { episodeLabel } from "@/lib/episodes";
 import logo from "@/assets/logo.png";
 import textLogo from "@/assets/amanxanime-text-logo.jpg";
@@ -39,50 +38,12 @@ export const Route = createFileRoute("/_authenticated/")({
 });
 
 function Home() {
-  const navigate = useNavigate();
-  const { queryClient } = Route.useRouteContext();
-  const taps = useRef(0);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [hint, setHint] = useState<string | null>(null);
-  const [username, setUsername] = useState<string | null>(null);
-  const [busyOut, setBusyOut] = useState(false);
-
   const { videos: data, thumbs, failed } = Route.useLoaderData();
-
-  useEffect(() => {
-    getCurrentUsername().then(setUsername);
-  }, []);
-
-  async function handleSignOut() {
-    if (busyOut) return;
-    setBusyOut(true);
-    await signOutWithCleanup(queryClient);
-    navigate({ to: "/auth", replace: true });
-  }
-
-  function handleLogoTap() {
-    taps.current += 1;
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      taps.current = 0;
-      setHint(null);
-    }, 1500);
-    if (taps.current >= 6 && taps.current < 10) setHint(`${10 - taps.current}`);
-    if (taps.current >= 10) {
-      taps.current = 0;
-      setHint(null);
-      navigate({ to: "/admin" });
-    }
-  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-5xl px-3 pb-16 pt-5 sm:px-6">
-      <header className="mb-6 flex items-center gap-3">
-        <button
-          onClick={handleLogoTap}
-          aria-label="amanXanime"
-          className="shrink-0 rounded-full outline-none"
-        >
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <img
             src={logo}
             alt="amanXanime logo"
@@ -91,39 +52,28 @@ function Home() {
             className="h-16 w-16 select-none"
             draggable={false}
           />
-        </button>
-        <img
-          src={textLogo}
-          alt="amanXanime"
-          className="h-10 w-auto object-contain sm:h-12"
-          draggable={false}
-        />
-        {hint && <span className="ml-auto text-xs text-muted-foreground">{hint}</span>}
-      </header>
-
-      <div className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5">
-        <span className="truncate text-sm text-muted-foreground">
-          {username ? `Namaste, ${username}!` : "Namaste!"}
-        </span>
-        <div className="flex shrink-0 items-center gap-2">
+          <img
+            src={textLogo}
+            alt="amanXanime"
+            className="h-10 w-auto object-contain sm:h-12"
+            draggable={false}
+          />
+        </div>
+        <nav aria-label="Main" className="flex shrink-0 items-center gap-2">
           <Link
             to="/compass"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
           >
             <Compass className="h-4 w-4" /> Compass
           </Link>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={busyOut}
-            aria-label="Sign out"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-60"
+          <Link
+            to="/admin"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
           >
-            {busyOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-            Sign out
-          </button>
-        </div>
-      </div>
+            <Upload className="h-4 w-4" /> Upload
+          </Link>
+        </nav>
+      </header>
 
       {failed && <p className="text-sm text-destructive">Videos load nahi ho payi.</p>}
       {!failed && data.length === 0 && (

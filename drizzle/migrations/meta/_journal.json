@@ -15,6 +15,13 @@
       "when": 1794712492775,
       "tag": "0001_restrict_public_video_changes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794931747897,
+      "tag": "0002_disable_public_admin_secret_check",
+      "breakpoints": true
     }
   ]
 }

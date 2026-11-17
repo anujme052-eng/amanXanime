@@ -9,5 +9,5 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 
-- Keep video library, playback, and compass pages under the pathless `_authenticated` layout so the shared sign-in guard protects them.
+- Keep video library, playback, and compass pages under the pathless `_authenticated` layout without a sign-in gate; public upload must not grant public edit or delete access.
 - Keep `/admin` public for uploads without a login or secret key, while cloud policies deny public video edits and deletes to prevent destructive access.
